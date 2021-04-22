@@ -41,9 +41,13 @@ pub fn solve(
     let mut orders: Vec<LimitOrder> = orders.collect();
     while !orders.is_empty() {
         let (context_a, context_b) = split_into_contexts(orders.clone().into_iter(), pool);
-        if let Some(valid_solution) =
-            solve_orders(orders.clone().into_iter(), &pool, &context_a, &context_b)
-                .filter(is_valid_solution)
+        if let Some(valid_solution) = dbg!(solve_orders(
+            orders.clone().into_iter(),
+            &pool,
+            &context_a,
+            &context_b
+        ))
+        .filter(is_valid_solution)
         {
             return Some(valid_solution);
         } else {
