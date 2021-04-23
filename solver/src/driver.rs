@@ -1,4 +1,9 @@
-use crate::{liquidity::Liquidity, settlement::Settlement, settlement_submission, solver::Solver};
+use crate::{
+    liquidity::{offchain_orderbook::BUY_ETH_ADDRESS, Liquidity},
+    settlement::Settlement,
+    settlement_submission,
+    solver::Solver,
+};
 use crate::{liquidity_collector::LiquidityCollector, metrics::SolverMetrics};
 use anyhow::{Context, Result};
 use contracts::GPv2Settlement;
@@ -91,7 +96,7 @@ impl Driver {
             .estimate_prices(&tokens, denominator_token)
             .await;
 
-        tokens
+        let mut prices: HashMap<_, _> = tokens
             .into_iter()
             .zip(estimated_prices)
             .filter_map(|(token, price)| match price {
@@ -101,7 +106,11 @@ impl Driver {
                     None
                 }
             })
-            .collect()
+            .collect();
+        if let Some(price) = prices.get(&self.native_token).cloned() {
+            prices.insert(BUY_ETH_ADDRESS, price);
+        }
+        prices
     }
 
     pub async fn single_run(&mut self) -> Result<()> {

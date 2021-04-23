@@ -1,7 +1,7 @@
 use crate::{
     encoding::{self, EncodedInteraction, EncodedSettlement, EncodedTrade},
     interactions::UnwrapWethInteraction,
-    liquidity::Settleable,
+    liquidity::{offchain_orderbook::BUY_ETH_ADDRESS, Settleable},
 };
 use anyhow::{anyhow, Result};
 use model::order::{Order, OrderKind};
@@ -144,6 +144,16 @@ impl SettlementEncoder {
                 return;
             }
         }
+
+        self.clearing_prices.insert(
+            BUY_ETH_ADDRESS,
+            *self
+                .clearing_prices
+                .get(&unwrap.weth.address())
+                .expect("Expecting price for native token"),
+        );
+        self.tokens.push(BUY_ETH_ADDRESS);
+        self.tokens.sort();
 
         // If the native token unwrap can't be merged with any existing ones,
         // just add it to the vector.
