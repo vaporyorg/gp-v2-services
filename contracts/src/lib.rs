@@ -14,3 +14,4 @@ include!(concat!(env!("OUT_DIR"), "/SushiswapV2Factory.rs"));
 include!(concat!(env!("OUT_DIR"), "/GPv2Settlement.rs"));
 include!(concat!(env!("OUT_DIR"), "/GPv2AllowListAuthentication.rs"));
 include!(concat!(env!("OUT_DIR"), "/WETH9.rs"));
+include!(concat!(env!("OUT_DIR"), "/Vault.rs"));
