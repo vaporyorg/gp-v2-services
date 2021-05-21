@@ -2,7 +2,9 @@ use crate::{current_block::BlockRetrieving, maintenance::Maintaining};
 use anyhow::{Context, Error, Result};
 use ethcontract::contract::{AllEventsBuilder, ParseLog};
 use ethcontract::errors::ExecutionError;
-use ethcontract::{dyns::DynTransport, BlockNumber as Web3BlockNumber, Event as EthcontractEvent, EventMetadata};
+use ethcontract::{
+    dyns::DynTransport, BlockNumber as Web3BlockNumber, Event as EthcontractEvent, EventMetadata,
+};
 use futures::{Stream, StreamExt, TryStreamExt};
 use std::ops::RangeInclusive;
 use tokio::sync::Mutex;

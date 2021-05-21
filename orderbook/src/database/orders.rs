@@ -267,6 +267,7 @@ mod tests {
     use primitive_types::U256;
     use sqlx::Executor;
     use std::collections::HashSet;
+    use shared::event_handling::EventIndex;
 
     #[tokio::test]
     #[ignore]
