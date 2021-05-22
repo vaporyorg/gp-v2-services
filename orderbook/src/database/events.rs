@@ -11,9 +11,9 @@ use contracts::gpv2_settlement::{
 use ethcontract::{Event as EthContractEvent, EventMetadata, H160, H256, U256};
 use futures::FutureExt;
 use model::order::OrderUid;
+use shared::event_handling::EventIndex;
 use sqlx::{Connection, Executor, Postgres, Transaction};
 use std::convert::TryInto;
-use shared::event_handling::EventIndex;
 
 #[derive(Debug)]
 pub enum Event {

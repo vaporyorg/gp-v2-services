@@ -1,4 +1,4 @@
-use contracts::{GPv2Settlement, Vault, WETH9};
+use contracts::{BalancerV2Vault, GPv2Settlement, WETH9};
 use model::{order::OrderUid, DomainSeparator};
 use orderbook::{
     account_balances::Web3BalanceFetcher,
@@ -15,7 +15,7 @@ use shared::{
     current_block::current_block_stream,
     maintenance::ServiceMaintenance,
     pool_aggregating::{self, PoolAggregator},
-    pool_fetching::{CachedPoolFetcher, FilteredPoolFetcher},
+    pool_fetching::CachedPoolFetcher,
     price_estimate::BaselinePriceEstimator,
     transport::LoggingTransport,
 };
@@ -87,7 +87,7 @@ async fn main() {
     let settlement_contract = GPv2Settlement::deployed(&web3)
         .await
         .expect("Couldn't load deployed settlement");
-    let vault_contract = Vault::deployed(&web3)
+    let vault_contract = BalancerV2Vault::deployed(&web3)
         .await
         .expect("Couldn't load deployed balancer vault");
     let gp_allowance = settlement_contract
@@ -160,10 +160,8 @@ async fn main() {
         pool_aggregating::pair_providers(&args.shared.baseline_sources, chain_id, &web3).await;
 
     let pool_aggregator = PoolAggregator::from_providers(&pair_providers, &web3).await;
-    let cached_pool_fetcher =
-        CachedPoolFetcher::new(Box::new(pool_aggregator), current_block_stream.clone());
     let pool_fetcher =
-        FilteredPoolFetcher::new(Box::new(cached_pool_fetcher), unsupported_tokens.clone());
+        CachedPoolFetcher::new(Box::new(pool_aggregator), current_block_stream.clone());
 
     let price_estimator = Arc::new(BaselinePriceEstimator::new(
         Box::new(pool_fetcher),

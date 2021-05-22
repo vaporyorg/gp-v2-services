@@ -114,8 +114,8 @@ mod tests {
     use ethcontract::H256;
     use model::order::{Order, OrderCreation, OrderMetaData};
     use model::trade::Trade;
-    use std::collections::HashSet;
     use shared::event_handling::EventIndex;
+    use std::collections::HashSet;
 
     async fn generate_owners_and_order_ids(
         num_owners: usize,

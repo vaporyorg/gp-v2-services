@@ -1,20 +1,21 @@
-use crate::event_handling::EventIndex;
+use crate::{event_handling::EventIndex, Web3};
 use crate::{
     event_handling::{BlockNumber, EventHandler, EventStoring},
     impl_event_retrieving,
     maintenance::Maintaining,
-    Web3,
 };
 use anyhow::{anyhow, Context, Result};
 use contracts::{
-    balancer_v2::{
+    balancer_v2_vault::{
         self, event_data::PoolRegistered as ContractPoolRegistered, Event as ContractEvent,
     },
-    Vault,
+    BalancerV2Vault,
 };
 use ethcontract::{dyns::DynWeb3, Event as EthContractEvent, EventMetadata, H160};
-use std::collections::{HashMap, HashSet};
-use std::ops::RangeInclusive;
+use std::{
+    collections::{HashMap, HashSet},
+    ops::RangeInclusive,
+};
 use tokio::sync::Mutex;
 
 #[derive(Debug)]
@@ -99,7 +100,11 @@ impl BalancerPools {
                     .or_default()
                     .insert(weighted_pool.pool_id);
             }
-            tracing::debug!("Updated Balancer Pools with {:?} - {:?}", registration.pool_address, index);
+            tracing::debug!(
+                "Updated Balancer Pools with {:?} - {:?}",
+                registration.pool_address,
+                index
+            );
         } else {
             tracing::debug!("Ignored known pool {:?}", registration.pool_address);
         }
@@ -195,13 +200,19 @@ impl BalancerPoolFetching for BalancerPoolFetcher {
     }
 }
 
-pub struct BalancerEventUpdater(Mutex<EventHandler<DynWeb3, VaultContract, BalancerPools>>);
+pub struct BalancerEventUpdater(
+    Mutex<EventHandler<DynWeb3, BalancerV2VaultContract, BalancerPools>>,
+);
 
 impl BalancerEventUpdater {
-    pub fn new(contract: Vault, pools: BalancerPools, start_sync_at_block: Option<u64>) -> Self {
+    pub fn new(
+        contract: BalancerV2Vault,
+        pools: BalancerPools,
+        start_sync_at_block: Option<u64>,
+    ) -> Self {
         Self(Mutex::new(EventHandler::new(
             contract.raw_instance().web3(),
-            VaultContract(contract),
+            BalancerV2VaultContract(contract),
             pools,
             start_sync_at_block,
         )))
@@ -242,7 +253,7 @@ impl EventStoring<ContractEvent> for BalancerPools {
 }
 
 impl_event_retrieving! {
-    pub VaultContract for balancer_v2
+    pub BalancerV2VaultContract for balancer_v2_vault
 }
 
 #[async_trait::async_trait]
