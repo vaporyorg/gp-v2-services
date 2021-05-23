@@ -42,7 +42,7 @@ pub type PoolId = [u8; 32];
 
 #[derive(Default)]
 pub struct BalancerPools {
-    pools_by_token: HashMap<H160, HashSet<PoolId>>,
+    _pools_by_token: HashMap<H160, HashSet<PoolId>>,
     pools: HashMap<PoolId, HashSet<WeightedPool>>,
     // Block number of last update
     last_updated: u64,
@@ -54,7 +54,7 @@ impl BalancerPools {
     }
 
     // All insertions happen in one transaction.
-    fn insert_events(&mut self, events: Vec<(EventIndex, BalancerEvent)>) -> Result<()> {
+    fn insert_events(&self, events: Vec<(EventIndex, BalancerEvent)>) -> Result<()> {
         for (index, event) in events {
             match event {
                 BalancerEvent::PoolRegistered(event) => self.insert_pool(index, event),
@@ -63,13 +63,13 @@ impl BalancerPools {
         Ok(())
     }
 
-    fn _delete_events(&mut self, _delete_from_block_number: u64) -> Result<()> {
+    fn _delete_events(&self, _delete_from_block_number: u64) -> Result<()> {
         // TODO - delete from when asked.
         Ok(())
     }
 
     fn replace_events(
-        &mut self,
+        &self,
         _delete_from_block_number: u64,
         events: Vec<(EventIndex, BalancerEvent)>,
     ) -> Result<()> {
@@ -82,24 +82,25 @@ impl BalancerPools {
         self.pools.contains_key(&pool_id)
     }
 
-    fn insert_pool(&mut self, index: EventIndex, registration: PoolRegistered) {
+    fn insert_pool(&self, index: EventIndex, registration: PoolRegistered) {
         if !self.known_pool(registration.pool_id) {
             let pool_tokens = vec![];
-            let weighted_pool = WeightedPool {
+            let _weighted_pool = WeightedPool {
                 pool_address: registration.pool_address,
                 pool_id: registration.pool_id,
-                tokens: pool_tokens.clone(),
+                tokens: pool_tokens,
             };
-            self.pools
-                .entry(registration.pool_id)
-                .or_default()
-                .insert(weighted_pool.clone());
-            for token in pool_tokens {
-                self.pools_by_token
-                    .entry(token)
-                    .or_default()
-                    .insert(weighted_pool.pool_id);
-            }
+            // Need to figure out a way to update this.
+            // self.pools
+            //     .entry(registration.pool_id)
+            //     .or_default()
+            //     .insert(weighted_pool.clone());
+            // for token in pool_tokens {
+            //     self.pools_by_token
+            //         .entry(token)
+            //         .or_default()
+            //         .insert(weighted_pool.pool_id);
+            // }
             tracing::debug!(
                 "Updated Balancer Pools with {:?} - {:?}",
                 registration.pool_address,
@@ -183,15 +184,8 @@ pub struct BalancerPoolFetcher {
     pub web3: Web3,
 }
 
-#[async_trait::async_trait]
-pub trait BalancerPoolFetching: Send + Sync {
-    /// Retrieves all Balancer Pool information.
-    async fn get_pool_tokens(&self, pool_address: H160) -> Vec<H160>;
-}
-
-#[async_trait::async_trait]
-impl BalancerPoolFetching for BalancerPoolFetcher {
-    async fn get_pool_tokens(&self, _pool_address: H160) -> Vec<H160> {
+impl BalancerPoolFetcher {
+    async fn _get_pool_tokens(&self, _pool_address: H160) -> Vec<H160> {
         // let web3 = Web3::new(self.web3.transport().clone());
         // let pool_contract = BalancerPool::at(&web3, pool_address).await;
         // TODO - fetch tokens from pool
@@ -222,7 +216,7 @@ impl BalancerEventUpdater {
 #[async_trait::async_trait]
 impl EventStoring<ContractEvent> for BalancerPools {
     async fn replace_events(
-        &mut self,
+        &self,
         events: Vec<EthContractEvent<ContractEvent>>,
         range: RangeInclusive<BlockNumber>,
     ) -> Result<()> {
@@ -240,7 +234,7 @@ impl EventStoring<ContractEvent> for BalancerPools {
         Ok(())
     }
 
-    async fn append_events(&mut self, events: Vec<EthContractEvent<ContractEvent>>) -> Result<()> {
+    async fn append_events(&self, events: Vec<EthContractEvent<ContractEvent>>) -> Result<()> {
         let balancer_events = self
             .contract_to_balancer_events(events)
             .context("failed to convert events")?;

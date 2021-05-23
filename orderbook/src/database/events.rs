@@ -56,7 +56,7 @@ impl Database {
     }
 
     // All insertions happen in one transaction.
-    pub async fn insert_events(&mut self, events: Vec<(EventIndex, Event)>) -> Result<()> {
+    pub async fn insert_events(&self, events: Vec<(EventIndex, Event)>) -> Result<()> {
         let mut connection = self.pool.acquire().await?;
         connection
             .transaction(move |transaction| {
@@ -73,7 +73,7 @@ impl Database {
 
     // The deletion and all insertions happen in one transaction.
     pub async fn replace_events(
-        &mut self,
+        &self,
         delete_from_block_number: u64,
         events: Vec<(EventIndex, Event)>,
     ) -> Result<()> {
