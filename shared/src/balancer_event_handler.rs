@@ -11,6 +11,7 @@ use contracts::{
     },
     BalancerV2Vault,
 };
+use ethcontract::common::DeploymentInformation;
 use ethcontract::{dyns::DynWeb3, Event as EthContractEvent, EventMetadata, H160};
 use std::{
     collections::{HashMap, HashSet},
@@ -111,7 +112,7 @@ impl BalancerPools {
         }
     }
 
-    pub fn contract_to_balancer_events(
+    fn contract_to_balancer_events(
         &self,
         contract_events: Vec<EthContractEvent<ContractEvent>>,
     ) -> Result<Vec<(EventIndex, BalancerEvent)>> {
@@ -199,11 +200,18 @@ pub struct BalancerEventUpdater(
 );
 
 impl BalancerEventUpdater {
-    pub fn new(
-        contract: BalancerV2Vault,
-        pools: BalancerPools,
-        start_sync_at_block: Option<u64>,
-    ) -> Self {
+    pub fn new(contract: BalancerV2Vault, pools: BalancerPools) -> Self {
+        let mut start_sync_at_block = None;
+        if let Some(deployment_info) = contract.deployment_information() {
+            match deployment_info {
+                DeploymentInformation::BlockNumber(block_number) => {
+                    start_sync_at_block = Some(block_number);
+                }
+                // Having only transaction hash would require a web3 request
+                // to fetch the block number, but this method is not async.
+                DeploymentInformation::TransactionHash(_hash) => (),
+            }
+        };
         Self(Mutex::new(EventHandler::new(
             contract.raw_instance().web3(),
             BalancerV2VaultContract(contract),
