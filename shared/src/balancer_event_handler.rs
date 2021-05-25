@@ -1,8 +1,9 @@
-use crate::{event_handling::EventIndex, Web3};
 use crate::{
-    event_handling::{BlockNumber, EventHandler, EventStoring},
+    current_block::BlockRetrieving,
+    event_handling::{BlockNumber, EventHandler, EventIndex, EventStoring},
     impl_event_retrieving,
     maintenance::Maintaining,
+    Web3,
 };
 use anyhow::{anyhow, Context, Result};
 use contracts::{
@@ -200,23 +201,27 @@ pub struct BalancerEventUpdater(
 );
 
 impl BalancerEventUpdater {
-    pub fn new(contract: BalancerV2Vault, pools: BalancerPools) -> Self {
-        let mut start_sync_at_block = None;
+    pub async fn new(contract: BalancerV2Vault, pools: BalancerPools) -> Self {
+        let mut deployment_block = None;
         if let Some(deployment_info) = contract.deployment_information() {
             match deployment_info {
                 DeploymentInformation::BlockNumber(block_number) => {
-                    start_sync_at_block = Some(block_number);
+                    deployment_block = Some(block_number);
                 }
-                // Having only transaction hash would require a web3 request
-                // to fetch the block number, but this method is not async.
-                DeploymentInformation::TransactionHash(_hash) => (),
+                DeploymentInformation::TransactionHash(hash) => {
+                    deployment_block = contract
+                        .raw_instance()
+                        .web3()
+                        .block_number_from_tx_hash(hash)
+                        .await;
+                }
             }
         };
         Self(Mutex::new(EventHandler::new(
             contract.raw_instance().web3(),
             BalancerV2VaultContract(contract),
             pools,
-            start_sync_at_block,
+            deployment_block,
         )))
     }
 }
