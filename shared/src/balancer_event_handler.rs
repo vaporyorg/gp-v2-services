@@ -45,7 +45,7 @@ pub type PoolId = [u8; 32];
 #[derive(Default)]
 pub struct BalancerPools {
     _pools_by_token: HashMap<H160, HashSet<PoolId>>,
-    pools: HashMap<PoolId, HashSet<WeightedPool>>,
+    pools: HashMap<PoolId, WeightedPool>,
     // Block number of last update
     last_updated: u64,
 }
